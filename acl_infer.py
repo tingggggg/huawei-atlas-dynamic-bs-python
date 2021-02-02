@@ -427,56 +427,16 @@ def build_argparser():
     parser.add_argument("-p", "--precision", help="", default="FP32", type=str)
     return parser
 
-def do(model_file, number_iter, batchs, shapes, device=0, **kwargs):
-    """Do inference with shape and batch
-    Args:
-        model_file(str): model path
-        number_iter(int): Total number of times for each execute
-        batchs(list): list out each batch size which need to do inference e.g. [1, 2, 4, 8, ...]
-        shapes(list(tuple)): list out each CxHxW which need to do inference e.g. [(3, 224, 224), ...]
-        device(int): npu card id
-    Returns:
-        A list include average inference times of each batch & shape 
-        e.g. [((1, 3, 224, 224), 4.437762840340535), ((2, 3, 224, 224), 3.2970468358447156), ...]
-    """
-    precision = None if 'precision' not in kwargs else kwargs['precision']
-    times = []
-    shapes = ([shapes] if isinstance(shapes, int) else shapes)
-    net = Net(device, model_file)
-    
-    for shape in shapes:
-          infer_img = random_pic() # this img be flatten, like (3,224,224,) - > (150528, )
-          for batch in batchs:
-              infer_imgs = [infer_img] * batch
-              res_time = net.run(infer_imgs, len(infer_imgs), number_iter=number_iter)
-              print("Average running time of one iteration: {} ms".format(res_time))
-              print("Average running time of one input: {} ms".format(res_time / batch))
-              if not isinstance(shape, int):
-                times.append(((batch, shape[0], shape[1], shape[2]), res_time / batch))
-              else:
-                times.append(((batch, shape), res_time / batch))
-    return times
-
 
 if __name__ == '__main__':
     args = build_argparser().parse_args()
-    
-    batchs = utils.calc_batchs(args.min_batch, args.max_batch)
-    shapes = (utils.split_shapes(args.size) if "x" in args.size else int(args.size))
-
-    do(args.model_path, args.number_iter, batchs, shapes, device=args.device)
 
     # below from origin sample code
-    # net = Net(args.device, args.model_path)
-    # images_list = [os.path.join(args.images_path, img)
-    #                for img in os.listdir(args.images_path)
-    #                if os.path.splitext(img)[1] in IMG_EXT]
+    net = Net(args.device, args.model_path)
+    img = random_pic()
 
-    # data_list = []
-    # for image in images_list:
-    #     dst_im = transfer_pic(image)
-    #     data_list.append(dst_im)
+    img_list = [img] * 4
 
-    # net.run(data_list, len(data_list))
-
+    res_time = net.run(img_list, len(img_list))
+    print(res_time)
     # print("*****run finish******")
