@@ -284,7 +284,7 @@ class Net(object):
         self.batch_size = batch_size
         self._data_from_host_to_device(images)
         res_time = self.forward(number_iter)
-        # self._data_from_device_to_host()
+        self._data_from_device_to_host()
         return res_time
 
     def forward(self, number_iter=3):
